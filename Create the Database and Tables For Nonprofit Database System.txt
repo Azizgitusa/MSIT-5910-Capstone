@@ -1,0 +1,75 @@
+Create the Database and Tables
+Open MySQL Command Line Client or MySQL Workbench, log in with your root password, then copy and paste the entire SQL script below:
+sql
+-- Create database
+CREATE DATABASE IF NOT EXISTS nonprofit_db;
+USE nonprofit_db;
+
+-- Users table
+CREATE TABLE users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('admin', 'editor', 'viewer') NOT NULL
+);
+
+-- Table permissions
+CREATE TABLE user_permissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    table_name VARCHAR(50) NOT NULL,
+    can_view BOOLEAN DEFAULT FALSE,
+    can_edit BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+    UNIQUE KEY (user_id, table_name)
+);
+
+-- Default admin (password = 'admin123')
+INSERT INTO users (username, password, role) VALUES ('admin', 'admin123', 'admin');
+
+-- Give admin full permissions Done
+INSERT INTO user_permissions (user_id, table_name, can_view, can_edit) VALUES
+(1, 'people_served', TRUE, TRUE),
+(1, 'donors', TRUE, TRUE),
+(1, 'food_locations', TRUE, TRUE),
+(1, 'appointments', TRUE, TRUE),
+(1, 'reports', TRUE, TRUE);
+
+-- Core data tables
+CREATE TABLE people_served (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(100) NOT NULL,
+    address VARCHAR(200),
+    family_size INT,
+    service_date DATE,
+    consent_given BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE donors (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100),
+    contact_phone VARCHAR(20),
+    donation_amount DECIMAL(10,2),
+    donation_date DATE
+);
+
+CREATE TABLE food_locations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    location_name VARCHAR(100) NOT NULL,
+    address VARCHAR(200),
+    days_of_operation VARCHAR(100),
+    contact_person VARCHAR(100)
+);
+
+CREATE TABLE appointments (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    recipient_id INT,
+    appointment_date DATE,
+    appointment_time TIME,
+    location_id INT,
+    purpose VARCHAR(200),
+    FOREIGN KEY (recipient_id) REFERENCES people_served(id) ON DELETE CASCADE,
+    FOREIGN KEY (location_id) REFERENCES food_locations(id) ON DELETE SET NULL
+);
+
